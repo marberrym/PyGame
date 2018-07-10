@@ -1,29 +1,36 @@
-import pygame
-pygame.init()
-pygame.mixer.init()
+import pygame as pg
+pg.init()
+pg.mixer.init()
 
 #Music - Destroy the Orcs
-pygame.mixer.music.load('MP3Songs/DTO.mp3')
-pygame.mixer.music.queue('MP3Songs/DTO.mp3')
-pygame.mixer.music.play()
+pg.mixer.music.load('MP3Songs/DTO.mp3')
+pg.mixer.music.queue('MP3Songs/DTO.mp3')
+pg.mixer.music.play()
 
 
 screenwidth = 1280
 screenheight = 704
 
-win = pygame.display.set_mode((screenwidth, screenheight))
+tilesize = 32
+white = (255, 255, 255)
+gridwidth = screenwidth / tilesize
+# Grid Width is 40 tiles
+gridheight = screenheight / tilesize
+# Grid Height is 22 tiles
 
-Background = pygame.image.load('JPGImages/background.jpg')
-Platform = pygame.image.load('PNGImages/platform2.png')
-Beam = pygame.image.load('PNGImages/laser1.png')
+win = pg.display.set_mode((screenwidth, screenheight))
 
-moveRight = [pygame.image.load('PNGImages/R1.png'), pygame.image.load('PNGImages/R2.png'), pygame.image.load('PNGImages/R3.png'), pygame.image.load('PNGImages/R4.png'), pygame.image.load('PNGImages/R5.png'), pygame.image.load('PNGImages/R6.png'), pygame.image.load('PNGImages/R7.png'), pygame.image.load('PNGImages/R8.png'), pygame.image.load('PNGImages/R9.png')]
-moveLeft = [pygame.image.load('PNGImages/L1.png'), pygame.image.load('PNGImages/L2.png'), pygame.image.load('PNGImages/L3.png'), pygame.image.load('PNGImages/L4.png'), pygame.image.load('PNGImages/L5.png'), pygame.image.load('PNGImages/L6.png'), pygame.image.load('PNGImages/L7.png'), pygame.image.load('PNGImages/L8.png'), pygame.image.load('PNGImages/L9.png')]
-char = pygame.image.load('PNGImages/standing.png')
+Background = pg.image.load('JPGImages/background.jpg')
+Platform = pg.image.load('PNGImages/platform2.png')
+Beam = pg.image.load('PNGImages/laser1.png')
 
-pygame.display.set_caption("Matt Saves Atlanta From the Orcs!")
+moveRight = [pg.image.load('PNGImages/R1.png'), pg.image.load('PNGImages/R2.png'), pg.image.load('PNGImages/R3.png'), pg.image.load('PNGImages/R4.png'), pg.image.load('PNGImages/R5.png'), pg.image.load('PNGImages/R6.png'), pg.image.load('PNGImages/R7.png'), pg.image.load('PNGImages/R8.png'), pg.image.load('PNGImages/R9.png')]
+moveLeft = [pg.image.load('PNGImages/L1.png'), pg.image.load('PNGImages/L2.png'), pg.image.load('PNGImages/L3.png'), pg.image.load('PNGImages/L4.png'), pg.image.load('PNGImages/L5.png'), pg.image.load('PNGImages/L6.png'), pg.image.load('PNGImages/L7.png'), pg.image.load('PNGImages/L8.png'), pg.image.load('PNGImages/L9.png')]
+char = pg.image.load('PNGImages/standing.png')
 
-Clock = pygame.time.Clock()
+pg.display.set_caption("Matt Saves Atlanta From the Orcs!")
+
+Clock = pg.time.Clock()
 
 # Super class to be integrated
 # class Mob(object):
@@ -42,6 +49,22 @@ Clock = pygame.time.Clock()
 #         self.falling = True
 
 #Player Character Class Set
+
+
+class Tile(pg.sprite.Sprite):
+    def __init__(self, x, y):
+        self.groups = all_sprites, walls
+        pg.sprite.Sprite.__init__(self, self.groups)
+        self.image = win(tilesize, tilesize)
+
+class Grid(object):
+    def draw_grid(self):
+        for x in range(0, screenwidth, tilesize):
+            pg.draw.line(win, white, (x, 0), (x, screenheight))
+        for y in range(0, screenheight, tilesize):
+            pg.draw.line(win, white, (0, y), (screenwidth, y))
+
+
 class Player(object):
     def __init__(self, x, y, width, height):
         self.x = x
@@ -59,7 +82,6 @@ class Player(object):
 
     # def Collision(self):
     #     if 220 < self.x < 350 and self.y > 520:
-
     
     def redraw(self, win):
         if self.stepcount + 1 >= 27:
@@ -98,29 +120,31 @@ def ScreenRefresh ():
     win.blit(Background, (0, 0))
     
     #Platforms
-    win.blit(Platform, (550, 400))
-    win.blit(Platform, (220, 420))
-    win.blit(Platform, (950, 420))
+    # win.blit(Platform, (550, 400))
+    # win.blit(Platform, (220, 420))
+    # win.blit(Platform, (950, 420))
     
     #Laserbeams
     for beam in laserbeams:
         beam.redraw(win)
     #Player
     main.redraw(win)
-    pygame.display.update()
+    grid.draw_grid()
+    pg.display.update()
 
 
 #Global Variables
 run = True
 main = Player(600, 600, 64, 64)
+grid = Grid()
 laserbeams = []
 
 #Main Game Run Loop
 while run:
     Clock.tick(27)
     
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
             run = False
 
     for beam in laserbeams:
@@ -129,9 +153,9 @@ while run:
         else:
             laserbeams.pop(laserbeams.index(beam))
         
-    keys = pygame.key.get_pressed()
+    keys = pg.key.get_pressed()
 
-    if keys[pygame.K_SPACE]:
+    if keys[pg.K_SPACE]:
         if main.left:
             facing = -1
         else:
@@ -143,12 +167,12 @@ while run:
                 laserbeams.append(Laser((main.x + 20), (main.y - 10), 20, 20, facing))
         
 
-    if keys[pygame.K_LEFT] and main.x > main.vel:
+    if keys[pg.K_LEFT] and main.x > main.vel:
         main.x -= main.vel
         main.left = True
         main.right = False
         main.stand = False
-    elif keys[pygame.K_RIGHT] and main.x < (screenwidth - main.width - main.vel):
+    elif keys[pg.K_RIGHT] and main.x < (screenwidth - main.width - main.vel):
         main.x += main.vel
         main.right = True
         main.left = False
@@ -157,7 +181,7 @@ while run:
         main.stand = True
         main.stepcount = 0
     if not main.jump:
-        if keys[pygame.K_UP]:
+        if keys[pg.K_UP]:
             main.jump = True
     else:
         if main.airtime >= -10:
@@ -172,8 +196,8 @@ while run:
     
     
     ScreenRefresh()
-    pygame.display.flip()
+    pg.display.flip()
 
     
 
-pygame.quit()
+pg.quit()
