@@ -1,203 +1,151 @@
 import pygame as pg
-pg.init()
-pg.mixer.init()
-
-#Music - Destroy the Orcs
-pg.mixer.music.load('MP3Songs/DTO.mp3')
-pg.mixer.music.queue('MP3Songs/DTO.mp3')
-pg.mixer.music.play()
+import sys
+from PGSettings import *
+from PGSprites import *
 
 
-screenwidth = 1280
-screenheight = 704
-
-tilesize = 32
-white = (255, 255, 255)
-gridwidth = screenwidth / tilesize
-# Grid Width is 40 tiles
-gridheight = screenheight / tilesize
-# Grid Height is 22 tiles
-
-win = pg.display.set_mode((screenwidth, screenheight))
-
-Background = pg.image.load('JPGImages/background.jpg')
-Platform = pg.image.load('PNGImages/platform2.png')
-Beam = pg.image.load('PNGImages/laser1.png')
-
-moveRight = [pg.image.load('PNGImages/R1.png'), pg.image.load('PNGImages/R2.png'), pg.image.load('PNGImages/R3.png'), pg.image.load('PNGImages/R4.png'), pg.image.load('PNGImages/R5.png'), pg.image.load('PNGImages/R6.png'), pg.image.load('PNGImages/R7.png'), pg.image.load('PNGImages/R8.png'), pg.image.load('PNGImages/R9.png')]
-moveLeft = [pg.image.load('PNGImages/L1.png'), pg.image.load('PNGImages/L2.png'), pg.image.load('PNGImages/L3.png'), pg.image.load('PNGImages/L4.png'), pg.image.load('PNGImages/L5.png'), pg.image.load('PNGImages/L6.png'), pg.image.load('PNGImages/L7.png'), pg.image.load('PNGImages/L8.png'), pg.image.load('PNGImages/L9.png')]
-char = pg.image.load('PNGImages/standing.png')
-
-pg.display.set_caption("Matt Saves Atlanta From the Orcs!")
-
-Clock = pg.time.Clock()
-
-# Super class to be integrated
-# class Mob(object):
-#     def __init__(self, x, y, width, height, vel, health):
-#         self.x = x
-#         self.y = y
-#         self.width = width
-#         self.height = height
-#         self.vel = vel
-#         self.left = False
-#         self.right = False
-#         self.stepcount = 0
-#         self.jump = False
-#         self.airtime = 10
-#         self.stand = True
-#         self.falling = True
-
-#Player Character Class Set
+class Game:
+    def __init__(self):
+        pg.init()
+        pg.mixer.init()
+        self.screen = pg.display.set_mode((screenwidth, screenheight))
+        pg.display.set_caption("Atlanta Orcs")
+        self.clock = pg.time.Clock()
+        pg.key.set_repeat(500, 100)
+        self.load_data()
+        self.background = pg.image.load('JPGImages/background.jpg').convert()
+    
+    def load_data(self):
+        pass
 
 
-class Tile(pg.sprite.Sprite):
-    def __init__(self, x, y):
-        self.groups = all_sprites, walls
-        pg.sprite.Sprite.__init__(self, self.groups)
-        self.image = win(tilesize, tilesize)
+    def new(self):
+        self.all_sprites = pg.sprite.Group()
+        self.walls = pg.sprite.Group()
+        self.player = Player(self, 600, 600, 64, 64)
+        for x in range (4, 12):
+            Wall(self, x, 17)
+        for x in range (15, 25):
+            Wall(self, x, 13)
+        for x in range (28, 36):
+            Wall(self, x, 17)
 
-class Grid(object):
+    def run(self):
+        self.playing = True
+        while self.playing:
+            self.dt = self.clock.tick(FPS) / 1000
+            self.events()
+            self.update()
+            self.draw()
+        pg.quit()
+
+    def quit(self):
+        pg.quit()
+        sys.exit()
+
+    def update(self):
+        self.all_sprites.update()
+
     def draw_grid(self):
         for x in range(0, screenwidth, tilesize):
-            pg.draw.line(win, white, (x, 0), (x, screenheight))
+            pg.draw.line(self.screen, white, (x, 0), (x, screenheight))
         for y in range(0, screenheight, tilesize):
-            pg.draw.line(win, white, (0, y), (screenwidth, y))
+            pg.draw.line(self.screen, white, (0, y), (screenwidth, y))
+
+    def draw(self):
+        # self.lasers = Laser(g, self.player.x, self.player.y, self.player.facing)
+        pg.Surface.blit(self.screen, self.background, (0,0))
+        self.draw_grid()
+        self.all_sprites.draw(self.screen)
+        self.player.update(g.screen)
+        for beam in laserbeams:
+            beam.redraw(g.screen)
+        pg.display.flip()
 
 
-class Player(object):
-    def __init__(self, x, y, width, height):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.vel = 10
-        self.left = False
-        self.right = False
-        self.stepcount = 0
-        self.jump = False
-        self.airtime = 10
-        self.stand = True
-        self.falling = True
+    def events(self):
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                # self.playing = False
+                pg.quit()
 
-    # def Collision(self):
-    #     if 220 < self.x < 350 and self.y > 520:
-    
-    def redraw(self, win):
-        if self.stepcount + 1 >= 27:
-            self.stepcount = 0
-        if not self.stand:
-            if self.left:
-                win.blit(moveLeft[self.stepcount//3], (self.x, self.y))
-                self.stepcount += 1
-            elif self.right:
-                win.blit(moveRight[self.stepcount//3], (self.x, self.y))
-                self.stepcount += 1
-        else:
-            if self.right:
-                win.blit(moveRight[0], (self.x, self.y))
+        for beam in laserbeams:
+            if  beam.x < 1278 and beam.x > 0:
+                beam.x += beam.vel
             else:
-                win.blit(moveLeft[0], (self.x, self.y))
+                laserbeams.pop(laserbeams.index(beam))
+            
+        keys = pg.key.get_pressed()
 
-#Laser Beam Class
-class Laser(object):
-    def __init__(self, x, y, width, height, direction):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
-        self.direction = direction
-        self.vel = 20 * direction
-        self.lasercount = 0
-
-    def redraw(self, win):
-        win.blit(Beam, (self.x, self.y))
+        if keys[pg.K_SPACE]:
+            if g.player.left:
+                facing = -1
+            else:
+                facing = 1
+            if len(laserbeams) < 15:
+                if facing == -1:
+                    laserbeams.append(Laser(g, (g.player.x - 60), (g.player.y - 10), facing))
+                elif facing == 1:
+                    laserbeams.append(Laser(g, (g.player.x + 20), (g.player.y - 10), facing))
             
 
-#Game Screen Refresh Function
-def ScreenRefresh ():
-    #Background
-    win.blit(Background, (0, 0))
-    
+        if keys[pg.K_LEFT] and g.player.x > g.player.vel:
+            g.player.x -= g.player.vel
+            g.player.left = True
+            g.player.right = False
+            g.player.stand = False
+        elif keys[pg.K_RIGHT] and g.player.x < (screenwidth - g.player.width - g.player.vel):
+            g.player.x += g.player.vel
+            g.player.right = True
+            g.player.left = False
+            g.player.stand = False
+        else:
+            g.player.stand = True
+            g.player.stepcount = 0
+        if not g.player.jump:
+            if keys[pg.K_UP]:
+                g.player.jump = True
+        else:
+            if g.player.airtime >= -10:
+                neg = 1
+                if g.player.airtime < 0:
+                    neg = -1
+                g.player.y -= (g.player.airtime ** 2) * .4 * neg
+                g.player.airtime -= 1
+            else:
+                g.player.jump = False
+                g.player.airtime = 10   
+
+    def music(self):
+        self.loadmusic = pg.mixer.music.load('MP3Songs/DTO.mp3')
+        self.playmusic = pg.mixer.music.play()
+
+    def show_start_screen(self):
+        pass
+
+    def show_go_screen(self):
+        pass
+
+
     #Platforms
     # win.blit(Platform, (550, 400))
     # win.blit(Platform, (220, 420))
     # win.blit(Platform, (950, 420))
     
     #Laserbeams
-    for beam in laserbeams:
-        beam.redraw(win)
-    #Player
-    main.redraw(win)
-    grid.draw_grid()
-    pg.display.update()
-
-
-#Global Variables
-run = True
-main = Player(600, 600, 64, 64)
-grid = Grid()
-laserbeams = []
-
-#Main Game Run Loop
-while run:
-    Clock.tick(27)
-    
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            run = False
-
-    for beam in laserbeams:
-        if  beam.x < 1278 and beam.x > 0:
-            beam.x += beam.vel
-        else:
-            laserbeams.pop(laserbeams.index(beam))
-        
-    keys = pg.key.get_pressed()
-
-    if keys[pg.K_SPACE]:
-        if main.left:
-            facing = -1
-        else:
-            facing = 1
-        if len(laserbeams) < 5:
-            if facing == -1:
-                laserbeams.append(Laser((main.x - 60), (main.y - 10), 20, 20, facing))
-            elif facing == 1:
-                laserbeams.append(Laser((main.x + 20), (main.y - 10), 20, 20, facing))
-        
-
-    if keys[pg.K_LEFT] and main.x > main.vel:
-        main.x -= main.vel
-        main.left = True
-        main.right = False
-        main.stand = False
-    elif keys[pg.K_RIGHT] and main.x < (screenwidth - main.width - main.vel):
-        main.x += main.vel
-        main.right = True
-        main.left = False
-        main.stand = False
-    else:
-        main.stand = True
-        main.stepcount = 0
-    if not main.jump:
-        if keys[pg.K_UP]:
-            main.jump = True
-    else:
-        if main.airtime >= -10:
-            neg = 1
-            if main.airtime < 0:
-                neg = -1
-            main.y -= (main.airtime ** 2) * .4 * neg
-            main.airtime -= 1
-        else:
-            main.jump = False
-            main.airtime = 10
-    
-    
-    ScreenRefresh()
-    pg.display.flip()
-
+    # for beam in laserbeams:
+    #     beam.redraw(win)
     
 
-pg.quit()
+# laserbeams = []
+
+g = Game()
+g.show_start_screen()
+while True:
+    g.music()
+    g.draw_grid
+    g.new()
+    g.run()
+    g.show_go_screen()
+    
+g.quit()
