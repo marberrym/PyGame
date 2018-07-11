@@ -1,11 +1,11 @@
 import pygame
+import sys
 
 FPS = 60
 #Screen Dimensions
 screenwidth = 1280
 screenheight = 704
 
-laserbeams = []
 
 #Tile Size
 tilesize = 32

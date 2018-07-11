@@ -58,7 +58,8 @@ class Game:
         self.draw_grid()
         self.all_sprites.draw(self.screen)
         self.player.update(g.screen)
-        for beam in laserbeams:
+        for beam in self.player.laserbeams:
+            beam.project(self.player)
             beam.redraw(g.screen)
         pg.display.flip()
 
@@ -66,55 +67,26 @@ class Game:
     def events(self):
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                # self.playing = False
                 pg.quit()
 
-        for beam in laserbeams:
-            if  beam.x < 1278 and beam.x > 0:
-                beam.x += beam.vel
-            else:
-                laserbeams.pop(laserbeams.index(beam))
-            
         keys = pg.key.get_pressed()
-
+        
+        #All player movement
         if keys[pg.K_SPACE]:
-            if g.player.left:
-                facing = -1
-            else:
-                facing = 1
-            if len(laserbeams) < 15:
-                if facing == -1:
-                    laserbeams.append(Laser(g, (g.player.x - 60), (g.player.y - 10), facing))
-                elif facing == 1:
-                    laserbeams.append(Laser(g, (g.player.x + 20), (g.player.y - 10), facing))
-            
-
-        if keys[pg.K_LEFT] and g.player.x > g.player.vel:
-            g.player.x -= g.player.vel
-            g.player.left = True
-            g.player.right = False
-            g.player.stand = False
-        elif keys[pg.K_RIGHT] and g.player.x < (screenwidth - g.player.width - g.player.vel):
-            g.player.x += g.player.vel
-            g.player.right = True
-            g.player.left = False
-            g.player.stand = False
+            self.player.shootlaser(g.screen)
+        if keys[pg.K_LEFT] and self.player.x > self.player.vel:
+            self.player.moveleft()
+        elif keys[pg.K_RIGHT] and self.player.x < (screenwidth - self.player.width - self.player.vel):
+            self.player.moveright()
         else:
-            g.player.stand = True
-            g.player.stepcount = 0
-        if not g.player.jump:
+            self.player.stand = True
+            self.player.stepcount = 0
+        if not self.player.jump:
             if keys[pg.K_UP]:
-                g.player.jump = True
+                self.player.jump = True
         else:
-            if g.player.airtime >= -10:
-                neg = 1
-                if g.player.airtime < 0:
-                    neg = -1
-                g.player.y -= (g.player.airtime ** 2) * .4 * neg
-                g.player.airtime -= 1
-            else:
-                g.player.jump = False
-                g.player.airtime = 10   
+            self.player.moveup()
+  
 
     def music(self):
         self.loadmusic = pg.mixer.music.load('MP3Songs/DTO.mp3')
