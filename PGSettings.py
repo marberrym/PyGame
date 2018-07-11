@@ -12,7 +12,7 @@ tilesize = 32
 
 #Colors
 white = (255, 255, 255)
-red = (255, 0, 0)
+red = (180, 100, 28)
 
 #Grid Dimensions
 gridwidth = screenwidth / tilesize
@@ -24,4 +24,3 @@ pg = pygame
 
 #PNG IMAGES
 platform = pg.image.load('PNGImages/platform2.png')
-# beam = pg.image.load('PNGImages/laser1.png')
